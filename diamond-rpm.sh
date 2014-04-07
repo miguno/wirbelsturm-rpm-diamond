@@ -46,7 +46,16 @@ cd Diamond || cleanup_and_exit $?
 git checkout ${DIAMOND_VERSION} || cleanup_and_exit $?
 
 # Build the RPM
-make rpm || cleanup_and_exit $?
+#
+# Normally we'd prefer to use `make rpm` combined with a custom `localversion` file.  Unfortunately Diamond uses
+# `localversion` as a suffix for the RPM version string, and does not expose a way to customize the RPM release string.
+# For this reason we manually perform the equivalent of `make rpm`;  this way we do not need to modify the Diamond
+# sources.  We introduce the risk though that the Diamond project may modify the functionality of `make rpm` without
+# us being aware of that change.
+RELEASE="1.miguno"
+make sdist || cleanup_and_exit $?
+# See https://docs.python.org/2/distutils/builtdist.html
+./setup.py bdist_rpm --release=$RELEASE || cleanup_and_exit $?
 
 # Rename the RPM to fit our style
 ORIG_RPM=`find dist/ -name "diamond-*.noarch.rpm" | head -n 1`
